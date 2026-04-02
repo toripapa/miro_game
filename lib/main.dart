@@ -297,12 +297,16 @@ class MiroGenerator {
     int safeZonesPerQuadrant;
     switch (difficulty) {
       case MiroDifficulty.easy:
-      case MiroDifficulty.normal:
         safeZonesPerQuadrant = 2; // 각 2개씩 (총 8개)
         break;
+      case MiroDifficulty.normal:
+        safeZonesPerQuadrant = 3; // 각 3개씩 (총 12개)
+        break;
       case MiroDifficulty.hard:
-      case MiroDifficulty.extreme:
         safeZonesPerQuadrant = 4; // 각 4개씩 (총 16개)
+        break;
+      case MiroDifficulty.extreme:
+        safeZonesPerQuadrant = 6; // 각 6개씩 (총 24개)
         break;
     }
 
@@ -314,7 +318,12 @@ class MiroGenerator {
     void _placeSafeZonesInQuadrant(int minR, int maxR, int minC, int maxC) {
       int count = 0;
       int attempts = 0;
-      while (count < safeZonesPerQuadrant && attempts < 150) {
+      List<Position> placedZones = [];
+
+      // 구역 내에서 타일들이 뭉치지 않도록 넓이 기반 최소 거리를 계산
+      double minDist = sqrt(((maxR - minR) * (maxC - minC)) / safeZonesPerQuadrant) * 0.5;
+
+      while (count < safeZonesPerQuadrant && attempts < 300) {
         attempts++;
         int r = minR + random.nextInt(maxR - minR + 1);
         int c = minC + random.nextInt(maxC - minC + 1);
@@ -328,9 +337,25 @@ class MiroGenerator {
           if (c + 1 < width - 1 && !board[r][c + 1].isWall) pathNeighbors++;
 
           if (pathNeighbors == 1) {
-            safeZones.add(Position(r, c));
-            board[r][c] = Tile(isWall: true, isSafeZone: true);
-            count++;
+            bool tooClose = false;
+            // 시도 횟수가 적을 때는 거리를 빡빡하게 검사하여 최대한 퍼뜨림
+            if (attempts < 150) {
+              for (var zone in placedZones) {
+                double dist = sqrt(pow(zone.row - r, 2) + pow(zone.col - c, 2));
+                if (dist < minDist) {
+                  tooClose = true;
+                  break;
+                }
+              }
+            }
+
+            if (!tooClose) {
+              Position newZone = Position(r, c);
+              safeZones.add(newZone);
+              placedZones.add(newZone);
+              board[r][c] = Tile(isWall: true, isSafeZone: true);
+              count++;
+            }
           }
         }
       }
@@ -650,6 +675,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
   bool isMonsterSpawned = false;
   bool isGameOver = false;
   bool isEscaped = false;
+  bool isPaused = false;
 
   int safeZoneCounter = 0;
   Timer? safeZoneTimer;
@@ -708,8 +734,22 @@ class _GameplayScreenState extends State<GameplayScreen> {
     super.dispose();
   }
 
-  void _gameLoop(Timer t) {
+  void _togglePause() {
+    focusNode: _focusNode.requestFocus();
     if (isGameOver || isEscaped) return;
+    setState(() {
+      isPaused = !isPaused;
+      if (isPaused) {
+        stopwatch.stop();
+        _stopContinuousMove(); // 이동 정지
+      } else {
+        stopwatch.start();
+      }
+    });
+  }
+
+  void _gameLoop(Timer t) {
+    if (isGameOver || isEscaped || isPaused) return;
 
     setState(() {
       playerVisualRow += (playerPos.row - playerVisualRow) * 0.25;
@@ -815,6 +855,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   void _checkMonsterSpawn() {
+    if (isPaused || isGameOver || isEscaped) return;
     if (!isMonsterSpawned && random.nextDouble() < 0.10) {
       setState(() {
         isMonsterSpawned = true;
@@ -889,7 +930,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   void _movePlayer(int dr, int dc) {
-    if (isGameOver || isEscaped) return;
+    if (isGameOver || isEscaped || isPaused) return;
     int nr = playerPos.row + dr; int nc = playerPos.col + dc;
     if (!_isWall(nr, nc)) {
       setState(() {
@@ -1086,6 +1127,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
           focusNode: _focusNode,
           autofocus: true,
           onKeyEvent: (FocusNode node, KeyEvent event) {
+            if (isPaused) return KeyEventResult.ignored;
             if (event is KeyDownEvent) {
               if (event.logicalKey == LogicalKeyboardKey.arrowUp || event.logicalKey == LogicalKeyboardKey.keyW) _movePlayer(-1, 0);
               else if (event.logicalKey == LogicalKeyboardKey.arrowDown || event.logicalKey == LogicalKeyboardKey.keyS) _movePlayer(1, 0);
@@ -1113,9 +1155,21 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     ),
                     Expanded(
                       flex: 1,
-                      child: StreamBuilder(
-                        stream: Stream.periodic(const Duration(milliseconds: 100)),
-                        builder: (_, __) => Text("${(stopwatch.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s", textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          StreamBuilder(
+                            stream: Stream.periodic(const Duration(milliseconds: 100)),
+                            builder: (_, __) => Text("${(stopwatch.elapsedMilliseconds / 1000.0).toStringAsFixed(1)}s", textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 5),
+                          IconButton(
+                            icon: Icon(isPaused ? Icons.play_arrow : Icons.pause, color: Colors.cyanAccent),
+                            onPressed: _togglePause,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
                       ),
                     ),
                     Expanded(
@@ -1195,7 +1249,27 @@ class _GameplayScreenState extends State<GameplayScreen> {
                             "$safeZoneCounter",
                             style: TextStyle(color: Colors.cyanAccent.withOpacity(0.8), fontSize: 120, fontWeight: FontWeight.bold)
                         ),
-                      )
+                      ),
+                    if (isPaused)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black87,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text("PAUSE", style: TextStyle(color: Colors.cyanAccent, fontSize: 50, fontWeight: FontWeight.bold, letterSpacing: 5)),
+                                const SizedBox(height: 30),
+                                IconButton(
+                                  iconSize: 80,
+                                  icon: const Icon(Icons.play_circle_fill, color: Colors.white),
+                                  onPressed: _togglePause,
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1617,4 +1691,13 @@ class _RankingScreenState extends State<RankingScreen> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
 
