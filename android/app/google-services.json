@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "749732944978",
+    "project_id": "somindoyoonapp",
+    "storage_bucket": "somindoyoonapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749732944978:android:4d1f1f81da6621b19c138b",
+        "android_client_info": {
+          "package_name": "com.papa.morigame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqdPjDzJJcSZYsem9sbZZY_Gf9TMAXm0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
