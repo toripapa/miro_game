@@ -204,7 +204,7 @@ class MiroGenerator {
     switch (difficulty) {
       case MiroDifficulty.easy:
         width = 15; height = 15;
-        monsterSpeedMult = 0.9;
+        monsterSpeedMult = 0.8; // 플레이어 속도 -20%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.green[900]!.withOpacity(0.3),
@@ -217,7 +217,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.normal:
         width = 21; height = 21;
-        monsterSpeedMult = 1.0;
+        monsterSpeedMult = 0.9; // 플레이어 속도 -10%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.blueGrey[900]!.withOpacity(0.4),
@@ -230,7 +230,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.hard:
         width = 31; height = 31;
-        monsterSpeedMult = 1.07;
+        monsterSpeedMult = 1.0; // 플레이어 속도 동일
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.deepOrange[900]!.withOpacity(0.2),
@@ -243,7 +243,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.extreme:
         width = 41; height = 41;
-        monsterSpeedMult = 1.15;
+        monsterSpeedMult = 1.05; // 플레이어 속도 +5%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.black.withOpacity(0.5),
@@ -818,17 +818,66 @@ class _GameplayScreenState extends State<GameplayScreen> {
     if (!isMonsterSpawned && random.nextDouble() < 0.10) {
       setState(() {
         isMonsterSpawned = true;
-        while (monsterPos == null) {
-          int r = random.nextInt(miroDef.board.length - 2) + 1;
-          int c = random.nextInt(miroDef.board[0].length - 2) + 1;
-          double dist = sqrt(pow(r - playerPos.row, 2) + pow(c - playerPos.col, 2));
-          if (!_isWall(r, c) && dist > (miroDef.board.length / 3) && !miroDef.board[r][c].isSafeZone) {
-            monsterPos = Position(r, c);
-            monsterVisualRow = r.toDouble();
-            monsterVisualCol = c.toDouble();
+
+        // BFS를 사용하여 길 기준 이동 거리(Depth) 계산
+        List<Position> candidates = [];
+        Queue<Position> queue = Queue();
+        Set<Position> visited = {};
+        Map<Position, int> distances = {};
+
+        queue.add(playerPos);
+        visited.add(playerPos);
+        distances[playerPos] = 0;
+
+        int targetDist = 30;
+
+        while (queue.isNotEmpty) {
+          Position curr = queue.removeFirst();
+          int dist = distances[curr]!;
+
+          if (dist >= targetDist - 5 && dist <= targetDist + 5 && !miroDef.board[curr.row][curr.col].isSafeZone) {
+             candidates.add(curr);
+          }
+
+          if (dist > targetDist + 5) continue;
+
+          List<Position> neighbors = [
+            Position(curr.row - 1, curr.col),
+            Position(curr.row + 1, curr.col),
+            Position(curr.row, curr.col - 1),
+            Position(curr.row, curr.col + 1),
+          ];
+
+          for (Position n in neighbors) {
+            if (!_isWall(n.row, n.col) && !visited.contains(n)) {
+              visited.add(n);
+              distances[n] = dist + 1;
+              queue.add(n);
+            }
           }
         }
-        debugPrint("⚠️ 몬스터 소환!");
+
+        if (candidates.isEmpty) {
+           // 목표 거리 영역에 타일이 없다면, 가장 먼 거리의 타일을 후보로 사용
+           int maxDist = 0;
+           distances.forEach((k, v) {
+             if (v > maxDist && !miroDef.board[k.row][k.col].isSafeZone) maxDist = v;
+           });
+           distances.forEach((k, v) {
+             if (v >= maxDist - 2 && !miroDef.board[k.row][k.col].isSafeZone) candidates.add(k);
+           });
+        }
+
+        if (candidates.isNotEmpty) {
+           monsterPos = candidates[random.nextInt(candidates.length)];
+           monsterVisualRow = monsterPos!.row.toDouble();
+           monsterVisualCol = monsterPos!.col.toDouble();
+        } else {
+           // 만약을 위한 백폴
+           monsterPos = Position(1, 1);
+        }
+
+        debugPrint("⚠️ 몬스터 소환! (이동 거리 30칸 근처)");
       });
     }
   }
@@ -922,7 +971,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
         content: AspectRatio(
           aspectRatio: 1,
           child: CustomPaint(
-            painter: MinimapPainter(miroDef: miroDef, playerPos: playerPos),
+            painter: MinimapPainter(miroDef: miroDef, playerPos: playerPos, monsterPos: monsterPos),
           ),
         ),
         actions: [
@@ -1437,8 +1486,9 @@ class Miro3DPainter extends CustomPainter {
 class MinimapPainter extends CustomPainter {
   final MiroDefinition miroDef;
   final Position playerPos;
+  final Position? monsterPos;
 
-  MinimapPainter({required this.miroDef, required this.playerPos});
+  MinimapPainter({required this.miroDef, required this.playerPos, this.monsterPos});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1453,7 +1503,9 @@ class MinimapPainter extends CustomPainter {
         Tile t = miroDef.board[r][c];
         Rect rect = Rect.fromLTWH(c * tileSize, r * tileSize, tileSize, tileSize);
 
-        if (t.isWall) {
+        if (t.isSafeZone) {
+          canvas.drawRect(rect, Paint()..color = Colors.blueAccent.withOpacity(0.8));
+        } else if (t.isWall) {
           canvas.drawRect(rect, Paint()..color = Colors.white24);
         } else if (t.isFinish) {
           canvas.drawRect(rect, Paint()..color = Colors.cyanAccent);
@@ -1463,11 +1515,20 @@ class MinimapPainter extends CustomPainter {
       }
     }
 
-    canvas.drawCircle(Offset((playerPos.col + 0.5) * tileSize, (playerPos.row + 0.5) * tileSize), tileSize * 0.6, Paint()..color = Colors.redAccent);
+    // 도착지 표시 (도착지 위치 계산)
+    canvas.drawCircle(Offset((miroDef.finishPos.col + 0.5) * tileSize, (miroDef.finishPos.row + 0.5) * tileSize), tileSize * 0.4, Paint()..color = Colors.yellowAccent);
+
+    // 플레이어 표시
+    canvas.drawCircle(Offset((playerPos.col + 0.5) * tileSize, (playerPos.row + 0.5) * tileSize), tileSize * 0.6, Paint()..color = Colors.greenAccent);
+
+    // 몬스터 표시
+    if (monsterPos != null) {
+      canvas.drawCircle(Offset((monsterPos!.col + 0.5) * tileSize, (monsterPos!.row + 0.5) * tileSize), tileSize * 0.5, Paint()..color = Colors.redAccent);
+    }
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
 // --- 5. 랭킹 등록 및 확인 화면 ---
@@ -1556,3 +1617,4 @@ class _RankingScreenState extends State<RankingScreen> {
     );
   }
 }
+
