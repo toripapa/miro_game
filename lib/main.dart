@@ -304,20 +304,25 @@ class MiroGenerator {
     int safeZonesPerQuadrant;
     switch (difficulty) {
       case MiroDifficulty.easy:
-        safeZonesPerQuadrant = 2; // 각 2개씩 (총 8개)
+        safeZonesPerQuadrant = 4; // 2개 추가 (각 4개씩)
         break;
       case MiroDifficulty.normal:
-        safeZonesPerQuadrant = 3; // 각 3개씩 (총 12개)
+        safeZonesPerQuadrant = 5; // 2개 추가 (각 5개씩)
         break;
       case MiroDifficulty.hard:
-        safeZonesPerQuadrant = 4; // 각 4개씩 (총 16개)
+        safeZonesPerQuadrant = 6; // 2개 추가 (각 6개씩)
         break;
       case MiroDifficulty.extreme:
-        safeZonesPerQuadrant = 6; // 각 6개씩 (총 24개)
+        safeZonesPerQuadrant = 8; // 2개 추가 (각 8개씩)
         break;
     }
 
     List<Position> safeZones = [];
+
+    // 💡 시작 입구(시작점 바로 위쪽 벽)에 무조건 1개의 안전지대 추가
+    board[0][1] = Tile(isWall: true, isSafeZone: true);
+    safeZones.add(Position(0, 1));
+
     int midRow = height ~/ 2;
     int midCol = width ~/ 2;
 
