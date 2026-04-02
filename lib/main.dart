@@ -794,6 +794,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
                 monsterVisualCol = null;
                 safeZoneCounter = 0;
                 timer.cancel();
+                bgmPlayer.play(AssetSource('audio/bgm.wav')); // 💡 몬스터 소멸 시 기존 BGM으로 복귀
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("괴물이 포기하고 사라졌습니다!"), duration: Duration(seconds: 1)));
               }
             });
@@ -929,6 +930,9 @@ class _GameplayScreenState extends State<GameplayScreen> {
            monsterPos = Position(1, 1);
         }
 
+        // 💡 몬스터 소환 시 긴장감 있는 BGM 재생
+        bgmPlayer.play(AssetSource('audio/monster_bgm.wav'));
+
         debugPrint("⚠️ 몬스터 소환! (이동 거리 30칸 근처)");
       });
     }
@@ -1039,6 +1043,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   void _gameOver() {
     if (isGameOver) return;
+    bgmPlayer.play(AssetSource('audio/bgm.wav')); // 💡 원래 음악으로 복귀
     setState(() {
       isGameOver = true;
       stopwatch.stop();
@@ -1049,6 +1054,7 @@ class _GameplayScreenState extends State<GameplayScreen> {
 
   void _escpaeSuccess() {
     if (isEscaped) return;
+    bgmPlayer.play(AssetSource('audio/bgm.wav')); // 💡 탈출 성공 시 원래 음악으로 복귀
     setState(() {
       isEscaped = true;
       stopwatch.stop();
