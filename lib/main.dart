@@ -212,7 +212,7 @@ class MiroGenerator {
           wallTexture: GameImages.tileBrown,
           tileSize: 60.0,
           wallHeight: 26.0,
-          viewDistance: 5.0,
+          viewDistance: 9.0, // 시야 2배 확대
         );
         break;
       case MiroDifficulty.normal:
@@ -225,7 +225,7 @@ class MiroGenerator {
           wallTexture: GameImages.tileGray,
           tileSize: 50.0,
           wallHeight: 23.0,
-          viewDistance: 5.0,
+          viewDistance: 9.0, // 시야 2배 확대
         );
         break;
       case MiroDifficulty.hard:
@@ -238,7 +238,7 @@ class MiroGenerator {
           wallTexture: GameImages.tileBlack,
           tileSize: 45.0,
           wallHeight: 20.0,
-          viewDistance: 5.0,
+          viewDistance: 9.0, // 시야 2배 확대
         );
         break;
       case MiroDifficulty.extreme:
@@ -251,7 +251,7 @@ class MiroGenerator {
           wallTexture: GameImages.tileBlack,
           tileSize: 40.0,
           wallHeight: 23.0,
-          viewDistance: 5.0,
+          viewDistance: 9.0, // 시야 2배 확대
         );
         break;
     }
@@ -1309,7 +1309,7 @@ class Miro3DPainter extends CustomPainter {
 
     double px = (playerVisualCol + 0.5) * tileSize;
     double py = (playerVisualRow + 0.5) * tileSize;
-    double zoom = 1.8;
+    double zoom = 0.9; // 기존 1.8에서 0.9로 축소하여 약 2배 더 넓은 범위 표시
 
     canvas.save();
     canvas.translate(size.width / 2 - px * zoom, size.height / 2 - py * zoom);
