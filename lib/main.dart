@@ -7,6 +7,10 @@ import 'dart:typed_data';
 import 'dart:collection';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:audioplayers/audioplayers.dart';
+
+// --- 전역 오디오 플레이어 ---
+final AudioPlayer bgmPlayer = AudioPlayer();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +28,9 @@ void main() async {
   } catch (e) {
     debugPrint("Firebase 초기화 에러: $e");
   }
+
+  // 배경음악 설정 (재생은 첫 화면 클릭 시 시작되도록 변경 - 웹 자동재생 방지)
+  bgmPlayer.setReleaseMode(ReleaseMode.loop);
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -425,7 +432,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 30),
               if (playerId.isNotEmpty)
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    // 유저 상호작용 후 사운드 재생 (특히 웹 환경의 경우 필수)
+                    if (bgmPlayer.state != PlayerState.playing) {
+                      await bgmPlayer.play(AssetSource('audio/bgm.wav'));
+                    }
                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => CharacterSelectScreen(playerId: playerId)));
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.cyanAccent, padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
@@ -1691,13 +1702,5 @@ class _RankingScreenState extends State<RankingScreen> {
     );
   }
 }
-
-
-
-
-
-
-
-
 
 
