@@ -39,7 +39,7 @@ class MiroEscapeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '소민 탈출',
+      title: '픽셀 미로 탈출 3D',
       theme: ThemeData(
         primarySwatch: Colors.blueGrey,
         scaffoldBackgroundColor: const Color(0xFF121212),
@@ -319,14 +319,19 @@ class MiroGenerator {
         int r = minR + random.nextInt(maxR - minR + 1);
         int c = minC + random.nextInt(maxC - minC + 1);
 
-        // 유효한 길이고, 시작점/도착점이 아니며, 이미 안전지대가 아닌 곳에 배치
-        if (!board[r][c].isWall &&
-            !board[r][c].isFinish &&
-            Position(r, c) != startPos &&
-            !board[r][c].isSafeZone) {
-          safeZones.add(Position(r, c));
-          board[r][c] = Tile(isWall: false, isSafeZone: true);
-          count++;
+        // 특정 벽에 배치: 주변 길(wall==false)이 정확히 1개인 벽(막힌 벽)에만 배치
+        if (board[r][c].isWall && !board[r][c].isSafeZone) {
+          int pathNeighbors = 0;
+          if (r - 1 > 0 && !board[r - 1][c].isWall) pathNeighbors++;
+          if (r + 1 < height - 1 && !board[r + 1][c].isWall) pathNeighbors++;
+          if (c - 1 > 0 && !board[r][c - 1].isWall) pathNeighbors++;
+          if (c + 1 < width - 1 && !board[r][c + 1].isWall) pathNeighbors++;
+
+          if (pathNeighbors == 1) {
+            safeZones.add(Position(r, c));
+            board[r][c] = Tile(isWall: true, isSafeZone: true);
+            count++;
+          }
         }
       }
     }
@@ -378,7 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("SOMIN ESCAPE", style: TextStyle(color: Colors.cyanAccent, fontSize: 40, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              const Text("MIRO ESCAPE", style: TextStyle(color: Colors.cyanAccent, fontSize: 40, fontWeight: FontWeight.bold, letterSpacing: 2)),
               const SizedBox(height: 50),
               TextField(
                 controller: _idController,
@@ -828,7 +833,11 @@ class _GameplayScreenState extends State<GameplayScreen> {
     }
   }
 
-  bool _isWall(int r, int c) => r < 0 || r >= miroDef.board.length || c < 0 || c >= miroDef.board[0].length || miroDef.board[r][c].isWall;
+  bool _isWall(int r, int c) {
+    if (r < 0 || r >= miroDef.board.length || c < 0 || c >= miroDef.board[0].length) return true;
+    if (miroDef.board[r][c].isSafeZone) return false;
+    return miroDef.board[r][c].isWall;
+  }
 
   void _movePlayer(int dr, int dc) {
     if (isGameOver || isEscaped) return;
@@ -1308,36 +1317,7 @@ class Miro3DPainter extends CustomPainter {
         double x = c * tileSize;
         double y = r * tileSize;
 
-        if (t.isWall) {
-          Rect frontRect = Rect.fromLTWH(x, y - wallH + tileSize, tileSize, wallH);
-          if (miroDef.style.wallTexture != null) {
-            canvas.drawImageRect(
-                miroDef.style.wallTexture!,
-                Rect.fromLTWH(0, 0, miroDef.style.wallTexture!.width.toDouble(), miroDef.style.wallTexture!.height.toDouble()),
-                frontRect,
-                Paint()
-            );
-            canvas.drawRect(frontRect, Paint()..color = Colors.black.withOpacity(0.6));
-          } else {
-            canvas.drawRect(frontRect, Paint()..color = _darken(miroDef.style.wallFallbackColor, 0.4));
-          }
-          canvas.drawRect(frontRect, wallBorderPaint);
-
-          Rect topRect = Rect.fromLTWH(x, y - wallH, tileSize, tileSize);
-          if (miroDef.style.wallTexture != null) {
-            canvas.drawImageRect(
-                miroDef.style.wallTexture!,
-                Rect.fromLTWH(0, 0, miroDef.style.wallTexture!.width.toDouble(), miroDef.style.wallTexture!.height.toDouble()),
-                topRect,
-                Paint()
-            );
-            canvas.drawRect(topRect, Paint()..color = Colors.black.withOpacity(0.1));
-          } else {
-            canvas.drawRect(topRect, Paint()..color = miroDef.style.wallFallbackColor);
-          }
-          canvas.drawRect(topRect, wallBorderPaint);
-
-        } else if (t.isSafeZone) {
+        if (t.isSafeZone) {
           Rect frontRect = Rect.fromLTWH(x, y - (wallH * 0.5) + tileSize, tileSize, wallH * 0.5);
           canvas.drawRect(frontRect, safeZoneWallPaint);
           canvas.drawRect(frontRect, wallBorderPaint);
@@ -1345,7 +1325,8 @@ class Miro3DPainter extends CustomPainter {
           Rect topRect = Rect.fromLTWH(x, y - (wallH * 0.5), tileSize, tileSize);
           canvas.drawRect(topRect, safeZoneWallPaint);
           canvas.drawRect(topRect, wallBorderPaint);
-        }
+
+        } else if (t.isWall) {
       }
 
       if (playerVisualRow.round() == r) {
