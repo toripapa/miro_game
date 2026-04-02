@@ -1327,6 +1327,34 @@ class Miro3DPainter extends CustomPainter {
           canvas.drawRect(topRect, wallBorderPaint);
 
         } else if (t.isWall) {
+          Rect frontRect = Rect.fromLTWH(x, y - wallH + tileSize, tileSize, wallH);
+          if (miroDef.style.wallTexture != null) {
+            canvas.drawImageRect(
+                miroDef.style.wallTexture!,
+                Rect.fromLTWH(0, 0, miroDef.style.wallTexture!.width.toDouble(), miroDef.style.wallTexture!.height.toDouble()),
+                frontRect,
+                Paint()
+            );
+            canvas.drawRect(frontRect, Paint()..color = Colors.black.withOpacity(0.6));
+          } else {
+            canvas.drawRect(frontRect, Paint()..color = _darken(miroDef.style.wallFallbackColor, 0.4));
+          }
+          canvas.drawRect(frontRect, wallBorderPaint);
+
+          Rect topRect = Rect.fromLTWH(x, y - wallH, tileSize, tileSize);
+          if (miroDef.style.wallTexture != null) {
+            canvas.drawImageRect(
+                miroDef.style.wallTexture!,
+                Rect.fromLTWH(0, 0, miroDef.style.wallTexture!.width.toDouble(), miroDef.style.wallTexture!.height.toDouble()),
+                topRect,
+                Paint()
+            );
+            canvas.drawRect(topRect, Paint()..color = Colors.black.withOpacity(0.1));
+          } else {
+            canvas.drawRect(topRect, Paint()..color = miroDef.style.wallFallbackColor);
+          }
+          canvas.drawRect(topRect, wallBorderPaint);
+        }
       }
 
       if (playerVisualRow.round() == r) {
