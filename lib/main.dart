@@ -211,7 +211,7 @@ class MiroGenerator {
     switch (difficulty) {
       case MiroDifficulty.easy:
         width = 15; height = 15;
-        monsterSpeedMult = 0.8; // 플레이어 속도 -20%
+        monsterSpeedMult = 0.7; // 플레이어 속도 -20%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.green[900]!.withOpacity(0.3),
@@ -224,7 +224,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.normal:
         width = 21; height = 21;
-        monsterSpeedMult = 0.9; // 플레이어 속도 -10%
+        monsterSpeedMult = 0.8; // 플레이어 속도 -10%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.blueGrey[900]!.withOpacity(0.4),
@@ -237,7 +237,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.hard:
         width = 31; height = 31;
-        monsterSpeedMult = 1.0; // 플레이어 속도 동일
+        monsterSpeedMult = 0.9; // 플레이어 속도 동일
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.deepOrange[900]!.withOpacity(0.2),
@@ -250,7 +250,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.extreme:
         width = 41; height = 41;
-        monsterSpeedMult = 1.05; // 플레이어 속도 +5%
+        monsterSpeedMult = 1; // 플레이어 속도 +5%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.black.withOpacity(0.5),
