@@ -46,7 +46,7 @@ class MiroEscapeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '픽셀 미로 탈출 3D',
+      title: '두근두근 미로탈출',
       theme: ThemeData(
         primarySwatch: Colors.blueGrey,
         scaffoldBackgroundColor: const Color(0xFF121212),
@@ -211,7 +211,7 @@ class MiroGenerator {
     switch (difficulty) {
       case MiroDifficulty.easy:
         width = 15; height = 15;
-        monsterSpeedMult = 0.7; // 플레이어 속도 -20%
+        monsterSpeedMult = 0.4; // 플레이어 속도 -20%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.green[900]!.withOpacity(0.3),
@@ -224,7 +224,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.normal:
         width = 21; height = 21;
-        monsterSpeedMult = 0.8; // 플레이어 속도 -10%
+        monsterSpeedMult = 0.5; // 플레이어 속도 -10%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.blueGrey[900]!.withOpacity(0.4),
@@ -237,7 +237,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.hard:
         width = 31; height = 31;
-        monsterSpeedMult = 0.9; // 플레이어 속도 동일
+        monsterSpeedMult = 0.6; // 플레이어 속도 동일
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.deepOrange[900]!.withOpacity(0.2),
@@ -250,7 +250,7 @@ class MiroGenerator {
         break;
       case MiroDifficulty.extreme:
         width = 41; height = 41;
-        monsterSpeedMult = 1; // 플레이어 속도 +5%
+        monsterSpeedMult = 0.7; // 플레이어 속도 +5%
         style = MiroStyle(
           difficulty: difficulty,
           floorTint: Colors.black.withOpacity(0.5),
@@ -1354,18 +1354,18 @@ class _GameplayScreenState extends State<GameplayScreen> {
                   child: Center(
                     child: Column(
                       children: [
-                        _buildDpadBtn(Icons.arrow_drop_up, -1, 0, size: 75),
+                        _buildDpadBtn(Icons.arrow_drop_up, -1, 0, width: 150),
                         const SizedBox(height: 5),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildDpadBtn(Icons.arrow_left, 0, -1, size: 75),
+                            _buildDpadBtn(Icons.arrow_left, 0, -1, width: 150),
                             const SizedBox(width: 75),
-                            _buildDpadBtn(Icons.arrow_right, 0, 1, size: 75),
+                            _buildDpadBtn(Icons.arrow_right, 0, 1, width: 150),
                           ],
                         ),
                         const SizedBox(height: 5),
-                        _buildDpadBtn(Icons.arrow_drop_down, 1, 0, size: 75),
+                        _buildDpadBtn(Icons.arrow_drop_down, 1, 0, width: 150),
                       ],
                     ),
                   ),
@@ -1379,16 +1379,16 @@ class _GameplayScreenState extends State<GameplayScreen> {
                     children: [
                       Row(
                         children: [
-                          _buildDpadBtn(Icons.arrow_back_ios_new, 0, -1, size: 65),
+                          _buildDpadBtn(Icons.arrow_back_ios_new, 0, -1, width: 65),
                           const SizedBox(width: 10),
-                          _buildDpadBtn(Icons.arrow_forward_ios, 0, 1, size: 65),
+                          _buildDpadBtn(Icons.arrow_forward_ios, 0, 1, width: 65),
                         ],
                       ),
                       Row(
                         children: [
-                          _buildDpadBtn(Icons.keyboard_arrow_up, -1, 0, size: 65),
+                          _buildDpadBtn(Icons.keyboard_arrow_up, -1, 0, width: 65),
                           const SizedBox(width: 10),
-                          _buildDpadBtn(Icons.keyboard_arrow_down, 1, 0, size: 65),
+                          _buildDpadBtn(Icons.keyboard_arrow_down, 1, 0, width: 65),
                         ],
                       ),
                     ],
@@ -1402,18 +1402,18 @@ class _GameplayScreenState extends State<GameplayScreen> {
   }
 
   // 💡 [수정] 꾹 눌렀을 때 연속 이동을 지원하는 커스텀 버튼
-  Widget _buildDpadBtn(IconData i, int dr, int dc, {double size = 70}) => GestureDetector(
+  Widget _buildDpadBtn(IconData i, int dr, int dc, {double width = 70, double height = 60}) => GestureDetector(
     onTapDown: (_) => _startContinuousMove(dr, dc),
     onTapUp: (_) => _stopContinuousMove(),
     onTapCancel: () => _stopContinuousMove(),
     child: Container(
-      width: size, height: size - 10,
+      width: width, height: height,
       decoration: BoxDecoration(
           color: Colors.cyanAccent.withOpacity(0.15),
           borderRadius: BorderRadius.circular(15),
           border: Border.all(color: Colors.cyanAccent.withOpacity(0.5), width: 2)
       ),
-      child: Center(child: Icon(i, color: Colors.cyanAccent, size: size * 0.6)),
+      child: Center(child: Icon(i, color: Colors.cyanAccent, size: min(width, height) * 0.6)),
     ),
   );
 }
