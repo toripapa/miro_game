@@ -408,7 +408,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("MIRO ESCAPE", style: TextStyle(color: Colors.cyanAccent, fontSize: 40, fontWeight: FontWeight.bold, letterSpacing: 2)),
+              const Text("미로 탈출", style: TextStyle(color: Colors.cyanAccent, fontSize: 40, fontWeight: FontWeight.bold, letterSpacing: 2)),
               const SizedBox(height: 50),
               TextField(
                 controller: _idController,
