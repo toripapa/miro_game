@@ -1129,6 +1129,50 @@ class _GameplayScreenState extends State<GameplayScreen> {
     );
   }
 
+  void _showRestartDialog() {
+    bool wasPaused = isPaused;
+    if (!isPaused) _togglePause(); // 메뉴창을 띄우면 잠시 일시정지
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.black87,
+        title: const Text("게임 옵션", textAlign: TextAlign.center, style: TextStyle(color: Colors.cyanAccent, fontSize: 24, fontWeight: FontWeight.bold)),
+        content: const Text("다시 시작하거나 처음으로 돌아가시겠습니까?", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16)),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              bgmPlayer.play(AssetSource('audio/bgm.wav')); // BGM 초기화
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MiroSelectScreen(playerId: widget.playerId, selectedCharacterIndex: widget.selectedCharacterIndex, controlMode: widget.controlMode)));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
+            child: const Text("다시시작", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              bgmPlayer.play(AssetSource('audio/bgm.wav')); // BGM 초기화
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => CharacterSelectScreen(playerId: widget.playerId)));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+            child: const Text("처음으로", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (!wasPaused && isPaused) _togglePause(); // 원래 진행중이었다면 다시 시작
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+            child: const Text("취소", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double redOpacity = 0.0;
@@ -1188,6 +1232,13 @@ class _GameplayScreenState extends State<GameplayScreen> {
                           IconButton(
                             icon: Icon(isPaused ? Icons.play_arrow : Icons.pause, color: Colors.cyanAccent),
                             onPressed: _togglePause,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          const SizedBox(width: 5),
+                          IconButton(
+                            icon: const Icon(Icons.refresh, color: Colors.orangeAccent),
+                            onPressed: _showRestartDialog,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                           ),
